@@ -84,7 +84,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.end(
       JSON.stringify({
         success: true,
-        cronSchedule: 'hourly (0 * * * *)',
+        cronSchedule: 'daily (0 8 * * *)',
         calendarId,
         calendarTitle,
         syncedAt: new Date().toISOString(),

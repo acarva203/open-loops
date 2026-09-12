@@ -105,12 +105,12 @@ export const GCalConnectModal: React.FC<GCalConnectModalProps> = ({
             )}
           </div>
 
-          {/* Automated Hourly Cron Card */}
+          {/* Automated Daily Cron Card */}
           <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-200/80 dark:border-blue-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 dark:text-blue-300">
                 <Sparkles className="w-3.5 h-3.5 text-blue-500" />
-                <span>Zero-Prompt Background Cron (Hourly)</span>
+                <span>Zero-Prompt Background Cron (Daily Sync)</span>
               </div>
               <div className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                 Authorize once to enable automated serverless sync with persistent refresh tokens.

@@ -48,7 +48,7 @@ When juggling multiple high-stakes engagements (e.g. Club Presidencies, Research
 - **Dedicated Calendar Partitioning**: Syncs to an isolated secondary calendar (`"Open Loops Focus"`) so your primary calendar remains clean.
 
 ### 4. 🔄 Zero-Prompt Automated Cloud Cron
-- **Vercel Cron (`0 * * * *`)**: Built-in serverless hourly cron runner.
+- **Vercel Cron (`0 8 * * *`)**: Built-in serverless daily morning cron runner (100% free on Vercel Hobby plan).
 - **Persistent Offline OAuth**: Authenticate once with Google; the serverless `/api/cron` endpoint silently exchanges the `refresh_token` for fresh access credentials in the cloud (~100ms) with **zero browser popups or prompts**.
 - **1-Click .ICS Export**: Download standard iCalendar files for offline import into Apple Calendar or Google Calendar.
 
@@ -113,7 +113,7 @@ OpenLoops is architected to run **100% free forever** on standard developer free
 | Component | Provider & Tier | Monthly Cost |
 | :--- | :--- | :--- |
 | **Hosting & SSL** | Vercel (Hobby Tier) | **$0.00 / mo** |
-| **Automated Background Cron** | Vercel Cron (`0 * * * *`) | **$0.00 / mo** |
+| **Automated Background Cron** | Vercel Cron (`0 8 * * *` daily) | **$0.00 / mo** |
 | **Google Calendar API** | Google Cloud Console (1M req/day) | **$0.00 / mo** |
 
 ### Deploy Steps:
@@ -124,7 +124,7 @@ OpenLoops is architected to run **100% free forever** on standard developer free
    - `GOOGLE_CLIENT_SECRET`
    - `GOOGLE_REDIRECT_URI` (e.g. `https://your-app.vercel.app/api/auth/callback`)
    - `CRON_SECRET`
-4. Click **Deploy**. Vercel will host the app and activate the hourly background cron job automatically!
+4. Click **Deploy**. Vercel will host the app and activate the daily morning background cron job automatically!
 
 ---
 
