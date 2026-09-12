@@ -34,6 +34,8 @@ When juggling multiple high-stakes engagements (e.g. Club Presidencies, Research
 
 ### 2. 🌲 Workflowy-Grade Infinite Outliner
 - **Infinite Recursive Hierarchy**: Nest deliverables, sub-tasks, and dependencies to unlimited depth.
+- **Move / Reorder Mode (Toggle Feature)**: Click **Move Bullets** in the toolbar to reveal quick shift arrows (`▲ / ▼`) and drag handles (`⋮⋮`) for intuitive HTML5 drag-and-drop tree reordering.
+- **Keyboard Tree Shifting (`Alt + ↑ / ↓`)**: Effortlessly move any bullet up or down among its siblings without lifting your fingers from the keyboard.
 - **Breadcrumb Zoom Navigation**: Click any bullet dot to focus entirely on that sub-branch as its own clean root.
 - **Micro-Subnotes (`Shift + Enter`)**: Add context, specs, and links underneath any bullet.
 - **Instant Gratification Closure (`Cmd + Enter`)**: Checks off loops, triggers celebratory micro-confetti, strikes through text, logs completion timestamps, and decrements counters in real-time.
@@ -63,6 +65,7 @@ Press **`?`** anywhere in the app to open the keyboard cheatsheet modal:
 | **`Enter`** | Create a new sibling bullet below current line |
 | **`Tab`** | Indent bullet (nest as child of preceding sibling) |
 | **`Shift + Tab`** | Outdent bullet (move up one level) |
+| **`Alt + ↑ / ↓`** *(Option on Mac)* | Move / reorder bullet up or down among siblings |
 | **`Cmd / Ctrl + Enter`** | Mark loop complete / closed (or re-open) |
 | **`Shift + Enter`** | Add or edit a detailed sub-note / context description |
 | **`Backspace`** *(on empty)* | Delete empty bullet and return focus to previous item |

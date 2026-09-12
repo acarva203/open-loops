@@ -8,6 +8,7 @@ import {
   Layers,
   CheckCircle2,
   Tag,
+  ArrowUpDown,
 } from 'lucide-react';
 import type { Engagement, LoopNode } from '../types';
 import { BulletItem } from './BulletItem';
@@ -34,6 +35,14 @@ interface FocusOutlinerProps {
   onToggleCollapse: (engagementId: string, nodeId: string) => void;
   onIndent: (engagementId: string, nodeId: string) => void;
   onOutdent: (engagementId: string, nodeId: string) => void;
+  onMoveNodeUp: (engagementId: string, nodeId: string) => void;
+  onMoveNodeDown: (engagementId: string, nodeId: string) => void;
+  onMoveNodeToPosition: (
+    engagementId: string,
+    sourceId: string,
+    targetId: string,
+    position: 'before' | 'after' | 'inside'
+  ) => void;
   onDelete: (engagementId: string, nodeId: string) => string | null;
   onQuickSchedule?: (engagement: Engagement, node: LoopNode) => void;
 }
@@ -52,11 +61,15 @@ export const FocusOutliner: React.FC<FocusOutlinerProps> = ({
   onToggleCollapse,
   onIndent,
   onOutdent,
+  onMoveNodeUp,
+  onMoveNodeDown,
+  onMoveNodeToPosition,
   onDelete,
   onQuickSchedule,
 }) => {
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState<string>('');
+  const [reorderMode, setReorderMode] = useState<boolean>(false);
 
   // Target nodes being rendered (either zoomed node's children or rootNodes)
   const zoomedNode = useMemo(() => {
@@ -154,7 +167,7 @@ export const FocusOutliner: React.FC<FocusOutlinerProps> = ({
 
         {/* Live Open Loop Tally Badge for this engagement */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/60 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:indigo-900/60 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
             <Layers className="w-4 h-4 text-indigo-500" />
             <span>{scopeStats.open} Open Loops</span>
           </div>
@@ -188,8 +201,23 @@ export const FocusOutliner: React.FC<FocusOutlinerProps> = ({
           )}
         </div>
 
-        {/* Filter Controls */}
+        {/* Toolbar Controls */}
         <div className="flex items-center gap-2">
+          {/* Reorder / Move Mode Toggle */}
+          <button
+            onClick={() => setReorderMode(!reorderMode)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
+              reorderMode
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+            }`}
+            title="Toggle drag handles and move buttons to reorder bullets"
+          >
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            <span>{reorderMode ? 'Reorder Mode: ON' : 'Move Bullets'}</span>
+          </button>
+
+          {/* Hide/Show Closed */}
           <button
             onClick={onToggleHideCompleted}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
@@ -251,6 +279,7 @@ export const FocusOutliner: React.FC<FocusOutlinerProps> = ({
                 hideCompleted={hideCompleted}
                 searchFilter={searchFilter}
                 focusedNodeId={focusedNodeId}
+                reorderMode={reorderMode}
                 onFocusNode={setFocusedNodeId}
                 onZoom={onZoom}
                 onAddNode={onAddNode}
@@ -260,6 +289,9 @@ export const FocusOutliner: React.FC<FocusOutlinerProps> = ({
                 onToggleCollapse={onToggleCollapse}
                 onIndent={onIndent}
                 onOutdent={onOutdent}
+                onMoveNodeUp={onMoveNodeUp}
+                onMoveNodeDown={onMoveNodeDown}
+                onMoveNodeToPosition={onMoveNodeToPosition}
                 onDelete={onDelete}
                 onNavigateVertical={handleNavigateVertical}
                 onTagClick={(tag) => setSearchFilter(tag)}

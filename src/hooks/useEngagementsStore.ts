@@ -9,6 +9,9 @@ import {
   deleteNode as deleteTreeNode,
   indentNode as indentTreeNode,
   outdentNode as outdentTreeNode,
+  moveNodeUp as moveTreeNodeUp,
+  moveNodeDown as moveTreeNodeDown,
+  moveNodeToPosition as moveTreeNodeToPosition,
 } from '../utils/treeUtils';
 
 const STORAGE_KEY = 'open_loops_engagements_v3';
@@ -228,6 +231,50 @@ export function useEngagementsStore() {
     );
   }, []);
 
+  const moveNodeUp = useCallback((engagementId: string, nodeId: string) => {
+    setEngagements((prev) =>
+      prev.map((eng) => {
+        if (eng.id !== engagementId) return eng;
+        return {
+          ...eng,
+          rootNodes: moveTreeNodeUp(eng.rootNodes, nodeId),
+        };
+      })
+    );
+  }, []);
+
+  const moveNodeDown = useCallback((engagementId: string, nodeId: string) => {
+    setEngagements((prev) =>
+      prev.map((eng) => {
+        if (eng.id !== engagementId) return eng;
+        return {
+          ...eng,
+          rootNodes: moveTreeNodeDown(eng.rootNodes, nodeId),
+        };
+      })
+    );
+  }, []);
+
+  const moveNodeToPosition = useCallback(
+    (
+      engagementId: string,
+      sourceId: string,
+      targetId: string,
+      position: 'before' | 'after' | 'inside'
+    ) => {
+      setEngagements((prev) =>
+        prev.map((eng) => {
+          if (eng.id !== engagementId) return eng;
+          return {
+            ...eng,
+            rootNodes: moveTreeNodeToPosition(eng.rootNodes, sourceId, targetId, position),
+          };
+        })
+      );
+    },
+    []
+  );
+
   const deleteNode = useCallback(
     (engagementId: string, nodeId: string): string | null => {
       let previousId: string | null = null;
@@ -286,8 +333,12 @@ export function useEngagementsStore() {
     toggleNodeCollapse,
     indentNode,
     outdentNode,
+    moveNodeUp,
+    moveNodeDown,
+    moveNodeToPosition,
     deleteNode,
     resetToDemoData,
     importEngagements,
   };
 }
+

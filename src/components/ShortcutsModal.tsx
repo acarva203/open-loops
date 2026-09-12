@@ -13,6 +13,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     { key: 'Enter', desc: 'Create a new sibling loop below' },
     { key: 'Tab', desc: 'Indent loop (make it a sub-loop)' },
     { key: 'Shift + Tab', desc: 'Outdent loop (move up one level)' },
+    { key: 'Alt + ↑ / ↓', desc: 'Move loop up / down among siblings' },
     { key: 'Cmd / Ctrl + Enter', desc: 'Toggle loop completion (close loop)' },
     { key: 'Shift + Enter', desc: 'Add or edit a detailed sub-note' },
     { key: 'Backspace (on empty)', desc: 'Delete loop & focus previous item' },

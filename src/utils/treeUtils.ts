@@ -401,3 +401,132 @@ export function exportEngagementToMarkdown(engagement: Engagement): string {
   printNodes(engagement.rootNodes, 0);
   return md;
 }
+
+/**
+ * Swaps a node with its previous sibling at the same tree level.
+ */
+export function moveNodeUp(nodes: LoopNode[], targetId: string): LoopNode[] {
+  function processList(list: LoopNode[]): { list: LoopNode[]; moved: boolean } {
+    const idx = list.findIndex((n) => n.id === targetId);
+    if (idx > 0) {
+      const next = [...list];
+      const temp = next[idx];
+      next[idx] = next[idx - 1];
+      next[idx - 1] = temp;
+      return { list: next, moved: true };
+    }
+
+    let anyMoved = false;
+    const updated = list.map((node) => {
+      if (node.children && node.children.length > 0) {
+        const res = processList(node.children);
+        if (res.moved) {
+          anyMoved = true;
+          return { ...node, children: res.list };
+        }
+      }
+      return node;
+    });
+
+    return { list: updated, moved: anyMoved };
+  }
+
+  return processList(nodes).list;
+}
+
+/**
+ * Swaps a node with its next sibling at the same tree level.
+ */
+export function moveNodeDown(nodes: LoopNode[], targetId: string): LoopNode[] {
+  function processList(list: LoopNode[]): { list: LoopNode[]; moved: boolean } {
+    const idx = list.findIndex((n) => n.id === targetId);
+    if (idx !== -1 && idx < list.length - 1) {
+      const next = [...list];
+      const temp = next[idx];
+      next[idx] = next[idx + 1];
+      next[idx + 1] = temp;
+      return { list: next, moved: true };
+    }
+
+    let anyMoved = false;
+    const updated = list.map((node) => {
+      if (node.children && node.children.length > 0) {
+        const res = processList(node.children);
+        if (res.moved) {
+          anyMoved = true;
+          return { ...node, children: res.list };
+        }
+      }
+      return node;
+    });
+
+    return { list: updated, moved: anyMoved };
+  }
+
+  return processList(nodes).list;
+}
+
+/**
+ * Moves a source node before, after, or inside a target node (for drag and drop).
+ */
+export function moveNodeToPosition(
+  nodes: LoopNode[],
+  sourceId: string,
+  targetId: string,
+  position: 'before' | 'after' | 'inside'
+): LoopNode[] {
+  if (sourceId === targetId) return nodes;
+
+  let extracted: LoopNode | null = null;
+
+  function remove(list: LoopNode[]): LoopNode[] {
+    const next: LoopNode[] = [];
+    for (const item of list) {
+      if (item.id === sourceId) {
+        extracted = item;
+        continue;
+      }
+      if (item.children && item.children.length > 0) {
+        next.push({ ...item, children: remove(item.children) });
+      } else {
+        next.push(item);
+      }
+    }
+    return next;
+  }
+
+  const cleaned = remove(nodes);
+  if (!extracted) return nodes;
+
+  const nodeToInsert: LoopNode = extracted;
+
+  function insert(list: LoopNode[]): LoopNode[] {
+    const next: LoopNode[] = [];
+    for (const item of list) {
+      if (item.id === targetId) {
+        if (position === 'before') {
+          next.push(nodeToInsert, item);
+        } else if (position === 'after') {
+          next.push(item, nodeToInsert);
+        } else if (position === 'inside') {
+          next.push({
+            ...item,
+            collapsed: false,
+            children: [nodeToInsert, ...(item.children || [])],
+          });
+        }
+        continue;
+      }
+
+      if (item.children && item.children.length > 0) {
+        next.push({ ...item, children: insert(item.children) });
+      } else {
+        next.push(item);
+      }
+    }
+    return next;
+  }
+
+  return insert(cleaned);
+}
+

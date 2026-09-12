@@ -31,6 +31,9 @@ export function App() {
     toggleNodeCollapse,
     indentNode,
     outdentNode,
+    moveNodeUp,
+    moveNodeDown,
+    moveNodeToPosition,
     deleteNode,
     resetToDemoData,
     importEngagements,
@@ -155,6 +158,9 @@ export function App() {
             onToggleCollapse={toggleNodeCollapse}
             onIndent={indentNode}
             onOutdent={outdentNode}
+            onMoveNodeUp={moveNodeUp}
+            onMoveNodeDown={moveNodeDown}
+            onMoveNodeToPosition={moveNodeToPosition}
             onDelete={deleteNode}
             onQuickSchedule={handleQuickSchedule}
           />

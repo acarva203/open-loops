@@ -1,5 +1,13 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ChevronRight, Check, CornerDownRight, Clock } from 'lucide-react';
+import {
+  ChevronRight,
+  Check,
+  CornerDownRight,
+  Clock,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react';
 import type { LoopNode } from '../types';
 
 interface BulletItemProps {
@@ -9,6 +17,7 @@ interface BulletItemProps {
   hideCompleted: boolean;
   searchFilter: string;
   focusedNodeId: string | null;
+  reorderMode?: boolean;
   onFocusNode: (id: string | null) => void;
   onZoom: (id: string) => void;
   onAddNode: (engagementId: string, afterNodeId: string, text?: string) => string;
@@ -18,6 +27,14 @@ interface BulletItemProps {
   onToggleCollapse: (engagementId: string, nodeId: string) => void;
   onIndent: (engagementId: string, nodeId: string) => void;
   onOutdent: (engagementId: string, nodeId: string) => void;
+  onMoveNodeUp?: (engagementId: string, nodeId: string) => void;
+  onMoveNodeDown?: (engagementId: string, nodeId: string) => void;
+  onMoveNodeToPosition?: (
+    engagementId: string,
+    sourceId: string,
+    targetId: string,
+    position: 'before' | 'after' | 'inside'
+  ) => void;
   onDelete: (engagementId: string, nodeId: string) => string | null;
   onNavigateVertical: (currentId: string, direction: 'up' | 'down') => void;
   onTagClick: (tag: string) => void;
@@ -40,6 +57,7 @@ export const BulletItem: React.FC<BulletItemProps> = ({
   hideCompleted,
   searchFilter,
   focusedNodeId,
+  reorderMode = false,
   onFocusNode,
   onZoom,
   onAddNode,
@@ -49,6 +67,9 @@ export const BulletItem: React.FC<BulletItemProps> = ({
   onToggleCollapse,
   onIndent,
   onOutdent,
+  onMoveNodeUp,
+  onMoveNodeDown,
+  onMoveNodeToPosition,
   onDelete,
   onNavigateVertical,
   onTagClick,
@@ -58,13 +79,15 @@ export const BulletItem: React.FC<BulletItemProps> = ({
   const noteRef = useRef<HTMLTextAreaElement>(null);
 
   const [isEditingNote, setIsEditingNote] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOverPosition, setDragOverPosition] = useState<'before' | 'after' | 'inside' | null>(null);
+
   const isFocused = focusedNodeId === node.id;
 
   // Auto-focus when this node is targeted
   useEffect(() => {
     if (isFocused && inputRef.current) {
       inputRef.current.focus();
-      // place cursor at end
       const len = inputRef.current.value.length;
       inputRef.current.setSelectionRange(len, len);
     }
@@ -143,6 +166,20 @@ export const BulletItem: React.FC<BulletItemProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Alt + Up: Move loop up
+    if (e.altKey && e.key === 'ArrowUp') {
+      e.preventDefault();
+      onMoveNodeUp?.(engagementId, node.id);
+      return;
+    }
+
+    // Alt + Down: Move loop down
+    if (e.altKey && e.key === 'ArrowDown') {
+      e.preventDefault();
+      onMoveNodeDown?.(engagementId, node.id);
+      return;
+    }
+
     // Cmd / Ctrl + Enter: Toggle complete
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
@@ -191,29 +228,132 @@ export const BulletItem: React.FC<BulletItemProps> = ({
     }
 
     // Arrow Up
-    if (e.key === 'ArrowUp') {
+    if (e.key === 'ArrowUp' && !e.altKey) {
       e.preventDefault();
       onNavigateVertical(node.id, 'up');
       return;
     }
 
     // Arrow Down
-    if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown' && !e.altKey) {
       e.preventDefault();
       onNavigateVertical(node.id, 'down');
       return;
     }
   };
 
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent) => {
+    setIsDragging(true);
+    e.dataTransfer.setData('text/plain', node.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDragOverPosition(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetY = e.clientY - rect.top;
+    const height = rect.height;
+
+    if (offsetY < height * 0.25) {
+      setDragOverPosition('before');
+    } else if (offsetY > height * 0.75) {
+      setDragOverPosition('after');
+    } else {
+      setDragOverPosition('inside');
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverPosition(null);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sourceId = e.dataTransfer.getData('text/plain');
+    if (sourceId && sourceId !== node.id && dragOverPosition && onMoveNodeToPosition) {
+      onMoveNodeToPosition(engagementId, sourceId, node.id, dragOverPosition);
+    }
+    setDragOverPosition(null);
+  };
+
   return (
-    <div className={`relative group/item ${depth > 0 ? 'ml-5 sm:ml-6' : ''}`}>
+    <div
+      className={`relative group/item ${depth > 0 ? 'ml-5 sm:ml-6' : ''} ${
+        isDragging ? 'opacity-40' : ''
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drop Indicator Lines */}
+      {dragOverPosition === 'before' && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-500 rounded-full z-20 shadow-sm animate-pulse" />
+      )}
+      {dragOverPosition === 'after' && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-500 rounded-full z-20 shadow-sm animate-pulse" />
+      )}
+
       {/* Indentation guide line */}
       {depth > 0 && (
         <div className="absolute left-[-15px] sm:left-[-17px] top-0 bottom-0 w-[1px] bg-zinc-200 dark:bg-zinc-800/90 group-hover/item:bg-zinc-300 dark:group-hover/item:bg-zinc-700 transition-colors" />
       )}
 
       {/* Main Bullet Row */}
-      <div className="flex items-start gap-1 py-1 px-1 rounded-lg hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors">
+      <div
+        className={`flex items-start gap-1 py-1 px-1 rounded-lg transition-colors ${
+          dragOverPosition === 'inside'
+            ? 'bg-indigo-50/80 dark:bg-indigo-950/40 ring-1 ring-indigo-400'
+            : 'hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40'
+        }`}
+      >
+        {/* Reorder Drag Handle & Move Up/Down Controls */}
+        <div className="flex items-center shrink-0">
+          {/* Drag Handle */}
+          <div
+            draggable
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            className={`cursor-grab active:cursor-grabbing p-0.5 rounded-sm text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-opacity ${
+              reorderMode ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100'
+            }`}
+            title="Drag to reorder loop"
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </div>
+
+          {/* Quick Shift Up / Down Arrow buttons (visible in Reorder Mode) */}
+          {reorderMode && (
+            <div className="flex flex-col -space-y-1">
+              <button
+                type="button"
+                onClick={() => onMoveNodeUp?.(engagementId, node.id)}
+                className="p-0.5 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-sm"
+                title="Move up (Alt + ↑)"
+              >
+                <ChevronUp className="w-2.5 h-2.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onMoveNodeDown?.(engagementId, node.id)}
+                className="p-0.5 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-sm"
+                title="Move down (Alt + ↓)"
+              >
+                <ChevronDown className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Expand / Collapse Chevron */}
         <div className="w-5 h-6 flex items-center justify-center shrink-0">
           {hasChildren ? (
@@ -239,10 +379,7 @@ export const BulletItem: React.FC<BulletItemProps> = ({
             className="group/bullet relative w-4 h-4 flex items-center justify-center rounded-full transition-all"
             title="Click to zoom in on this loop"
           >
-            {/* Halo circle on hover */}
             <span className="absolute inset-0 rounded-full bg-zinc-200 dark:bg-zinc-700 opacity-0 group-hover/bullet:opacity-100 transition-opacity" />
-
-            {/* Inner dot */}
             <span
               className={`w-2 h-2 rounded-full transition-transform group-hover/bullet:scale-125 ${
                 hasChildren
@@ -330,7 +467,7 @@ export const BulletItem: React.FC<BulletItemProps> = ({
             </div>
           )}
 
-          {/* Completed Timestamp Tooltip / Meta */}
+          {/* Completed Timestamp */}
           {node.completed && node.completedAt && (
             <div className="text-[10px] text-emerald-600 dark:text-emerald-400/80 mt-0.5">
               Closed {new Date(node.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, {new Date(node.completedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
@@ -366,6 +503,7 @@ export const BulletItem: React.FC<BulletItemProps> = ({
               hideCompleted={hideCompleted}
               searchFilter={searchFilter}
               focusedNodeId={focusedNodeId}
+              reorderMode={reorderMode}
               onFocusNode={onFocusNode}
               onZoom={onZoom}
               onAddNode={onAddNode}
@@ -375,6 +513,9 @@ export const BulletItem: React.FC<BulletItemProps> = ({
               onToggleCollapse={onToggleCollapse}
               onIndent={onIndent}
               onOutdent={onOutdent}
+              onMoveNodeUp={onMoveNodeUp}
+              onMoveNodeDown={onMoveNodeDown}
+              onMoveNodeToPosition={onMoveNodeToPosition}
               onDelete={onDelete}
               onNavigateVertical={onNavigateVertical}
               onTagClick={onTagClick}
