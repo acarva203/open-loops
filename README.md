@@ -28,7 +28,7 @@ When juggling multiple high-stakes engagements (e.g. Club Presidencies, Research
 
 ### 1. ⚡ Executive Command Center
 - **Cognitive KPIs**: Instant tally of **Total Open Loops**, **Closed Loops**, and **Timeblocked Focus Hours Today**.
-- **Segmented Workload Distribution Spectrum**: Multi-color proportion bar showing the percentage breakdown of active loops across all your roles.
+- **Interactive Workload Distribution Pie Chart**: Dynamic SVG Donut & Pie Chart displaying live loop distribution across all roles with hover slice elevation, center percentage telemetry, and click-to-focus navigation.
 - **Interactive Quick-Capture Omnibar**: Capture thoughts into any role in under 2 seconds without leaving the home screen. Includes role selector and `#urgent`, `#next`, `#waiting` quick tag toggles.
 - **Smart Filter & Sort**: Filter by `Needs Attention` (`#urgent`/`#next`) or `Waiting On` (`#waiting`), sort by `Most Open Loops`, or search across all loops.
 

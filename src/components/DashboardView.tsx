@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Engagement, EngagementStats, GlobalStats } from '../types';
 import { getEngagementIcon } from '../utils/engagementIcons';
+import { WorkloadPieChart } from './WorkloadPieChart';
 
 interface DashboardViewProps {
   engagements: Engagement[];
@@ -160,23 +161,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       });
   }, [engagements, searchQuery, activeFilter, sortBy, engagementStats]);
 
-  // Workload distribution segments
-  const workloadSegments = useMemo(() => {
-    if (globalStats.totalOpenLoops === 0) return [];
-    return engagements.map((eng) => {
-      const stats = engagementStats.find((s) => s.id === eng.id);
-      const openCount = stats?.openLoops || 0;
-      const percentage = Math.round((openCount / globalStats.totalOpenLoops) * 100);
-      return {
-        id: eng.id,
-        title: eng.title,
-        color: eng.color,
-        count: openCount,
-        percentage,
-      };
-    });
-  }, [engagements, engagementStats, globalStats.totalOpenLoops]);
-
   const handleStartEdit = (eng: Engagement) => {
     setEditingId(eng.id);
     setEditTitle(eng.title);
@@ -261,9 +245,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* 2. Segmented Workload Distribution Spectrum */}
+          {/* 2. Interactive Workload Distribution Pie Chart */}
           <div className="mt-6 pt-5 border-t border-white/10">
-            <div className="flex items-center justify-between text-xs mb-2 text-zinc-400 font-medium">
+            <div className="flex items-center justify-between text-xs mb-3 text-zinc-400 font-medium">
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
                 Workload Distribution
@@ -271,38 +255,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>{globalStats.totalOpenLoops} total unresolved loops</span>
             </div>
 
-            {/* Segmented bar */}
-            <div className="h-3 w-full rounded-full bg-white/10 overflow-hidden flex shadow-inner">
-              {workloadSegments.map((seg) => (
-                <div
-                  key={seg.id}
-                  className="h-full transition-all duration-300 hover:opacity-90 relative group/seg"
-                  style={{
-                    width: `${seg.percentage}%`,
-                    backgroundColor: seg.color,
-                  }}
-                  title={`${seg.title}: ${seg.count} loops (${seg.percentage}%)`}
-                />
-              ))}
-            </div>
-
-            {/* Segment Legend */}
-            <div className="flex items-center flex-wrap gap-x-4 gap-y-1.5 mt-2.5 text-[11px]">
-              {workloadSegments.map((seg) => (
-                <button
-                  key={seg.id}
-                  onClick={() => onSelectEngagement(seg.id)}
-                  className="flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors"
-                >
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: seg.color }}
-                  />
-                  <span className="font-medium truncate max-w-[130px]">{seg.title.split(' ')[0]}</span>
-                  <span className="text-zinc-500 font-mono">({seg.percentage}%)</span>
-                </button>
-              ))}
-            </div>
+            <WorkloadPieChart
+              engagements={engagements}
+              engagementStats={engagementStats}
+              totalOpenLoops={globalStats.totalOpenLoops}
+              onSelectEngagement={onSelectEngagement}
+            />
           </div>
 
           {/* 3. Interactive Quick-Capture Omnibar */}
