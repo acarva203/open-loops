@@ -83,7 +83,7 @@ Press **`?`** anywhere in the app to open the keyboard cheatsheet modal:
 - **Serverless API**: Node.js runtime (`api/auth/`, `api/cron.ts`, `api/sync.ts`)
 - **Integration**: Google Identity Services (GIS), Google Calendar REST API v3, iCalendar standard
 - **Hosting & Cron**: Vercel Serverless Functions + Vercel Cron (`vercel.json`)
-- **Persistence**: LocalStorage with automatic JSON / Markdown export and backup
+- **Persistence**: Hybrid Dual-Layer Storage (Client-side IndexedDB for instant offline persistence + Cloud PostgreSQL sync via Neon/Supabase serverless API `/api/data`)
 
 ---
 

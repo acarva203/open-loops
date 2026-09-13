@@ -14,6 +14,8 @@ import {
   moveNodeToPosition as moveTreeNodeToPosition,
 } from '../utils/treeUtils';
 
+import { loadDurableState, saveDurableState } from '../services/durableStorage';
+
 const STORAGE_KEY = 'open_loops_engagements_v4';
 
 export function useEngagementsStore() {
@@ -34,12 +36,26 @@ export function useEngagementsStore() {
   const [hideCompleted, setHideCompleted] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Persist to local storage
+  // Initial load from durable storage (IndexedDB + Cloud Postgres)
+  useEffect(() => {
+    let mounted = true;
+    loadDurableState().then((res) => {
+      if (mounted && res.engagements && res.engagements.length > 0) {
+        setEngagements(res.engagements);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Persist to local storage + durable IndexedDB + Cloud Database
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(engagements));
+      saveDurableState(engagements, []);
     } catch (e) {
-      console.error('Failed to save engagements to localStorage:', e);
+      console.error('Failed to save engagements to storage:', e);
     }
   }, [engagements]);
 
