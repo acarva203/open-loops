@@ -14,6 +14,7 @@ import {
   Check,
   Send,
   SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import type { Engagement, EngagementStats, GlobalStats } from '../types';
 import { getEngagementIcon } from '../utils/engagementIcons';
@@ -63,6 +64,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'urgent' | 'waiting'>('all');
   const [sortBy, setSortBy] = useState<'default' | 'loops' | 'alpha'>('default');
+
+  // Workload section collapse state (persisted)
+  const [isWorkloadCollapsed, setIsWorkloadCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('open_loops_workload_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleWorkloadCollapse = () => {
+    setIsWorkloadCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('open_loops_workload_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Inline card add states: mapping engId -> string
   const [cardInlineInputs, setCardInlineInputs] = useState<Record<string, string>>({});
@@ -245,22 +265,41 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* 2. Interactive Workload Distribution Pie Chart */}
+          {/* 2. Interactive Workload Distribution Pie Chart (Collapsible) */}
           <div className="mt-6 pt-5 border-t border-white/10">
-            <div className="flex items-center justify-between text-xs mb-3 text-zinc-400 font-medium">
-              <span className="flex items-center gap-1.5 text-zinc-300">
+            <button
+              type="button"
+              onClick={toggleWorkloadCollapse}
+              className="w-full flex items-center justify-between text-xs mb-2 text-zinc-400 font-medium hover:text-white transition-colors group/toggle cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5 text-zinc-300 group-hover/toggle:text-white">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
-                Workload Distribution
+                <span>Workload Distribution</span>
+                <span className="text-[11px] text-zinc-500 font-mono">
+                  ({globalStats.totalOpenLoops} open loops)
+                </span>
               </span>
-              <span>{globalStats.totalOpenLoops} total unresolved loops</span>
-            </div>
 
-            <WorkloadPieChart
-              engagements={engagements}
-              engagementStats={engagementStats}
-              totalOpenLoops={globalStats.totalOpenLoops}
-              onSelectEngagement={onSelectEngagement}
-            />
+              <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 group-hover/toggle:text-zinc-200">
+                <span>{isWorkloadCollapsed ? 'Show chart' : 'Hide'}</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                    isWorkloadCollapsed ? '-rotate-90' : 'rotate-0'
+                  }`}
+                />
+              </div>
+            </button>
+
+            {!isWorkloadCollapsed && (
+              <div className="mt-3 animate-fade-in">
+                <WorkloadPieChart
+                  engagements={engagements}
+                  engagementStats={engagementStats}
+                  totalOpenLoops={globalStats.totalOpenLoops}
+                  onSelectEngagement={onSelectEngagement}
+                />
+              </div>
+            )}
           </div>
 
           {/* 3. Interactive Quick-Capture Omnibar */}
