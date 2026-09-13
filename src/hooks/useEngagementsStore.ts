@@ -14,7 +14,7 @@ import {
   moveNodeToPosition as moveTreeNodeToPosition,
 } from '../utils/treeUtils';
 
-const STORAGE_KEY = 'open_loops_engagements_v3';
+const STORAGE_KEY = 'open_loops_engagements_v4';
 
 export function useEngagementsStore() {
   const [engagements, setEngagements] = useState<Engagement[]>(() => {
