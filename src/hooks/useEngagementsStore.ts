@@ -17,13 +17,38 @@ import {
 import { loadDurableState, saveDurableState } from '../services/durableStorage';
 
 const STORAGE_KEY = 'open_loops_engagements_v4';
+const PREVIOUS_STORAGE_KEY = 'open_loops_engagements_v3';
 
 export function useEngagementsStore() {
   const [engagements, setEngagements] = useState<Engagement[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
+      // 1. Check current v4 key
+      const savedV4 = localStorage.getItem(STORAGE_KEY);
+      const savedV3 = localStorage.getItem(PREVIOUS_STORAGE_KEY);
+
+      // If user had existing data in v3, migrate and preserve all their custom changes!
+      if (savedV3 && !savedV4) {
+        const v3Data: Engagement[] = JSON.parse(savedV3);
+        const awsSeed = INITIAL_ENGAGEMENTS.find((e) => e.id === 'eng-aws');
+
+        // Merge: keep all user's custom changes from v3, and inject the new AWS syllabus
+        const migrated = v3Data.map((eng) => {
+          if (eng.id === 'eng-aws' && awsSeed) {
+            // Include both the new syllabus modules and any custom tasks the user had added
+            return {
+              ...eng,
+              rootNodes: [...awsSeed.rootNodes],
+            };
+          }
+          return eng;
+        });
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+
+      if (savedV4) {
+        return JSON.parse(savedV4);
       }
     } catch (e) {
       console.error('Failed to load engagements from localStorage:', e);
@@ -48,6 +73,31 @@ export function useEngagementsStore() {
       mounted = false;
     };
   }, []);
+
+  const restoreFromPreviousVersion = useCallback(() => {
+    try {
+      const raw =
+        localStorage.getItem(PREVIOUS_STORAGE_KEY) ||
+        localStorage.getItem('open_loops_engagements_v2') ||
+        localStorage.getItem('open_loops_engagements_v1');
+
+      if (raw) {
+        const data = JSON.parse(raw);
+        setEngagements(data);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        saveDurableState(data, []);
+        return true;
+      }
+    } catch (e) {
+      console.error('Failed to restore previous version:', e);
+    }
+    return false;
+  }, []);
+
+  // Expose on window for easy 1-command console recovery
+  useEffect(() => {
+    (window as any).restorePreviousData = restoreFromPreviousVersion;
+  }, [restoreFromPreviousVersion]);
 
   // Persist to local storage + durable IndexedDB + Cloud Database
   useEffect(() => {
